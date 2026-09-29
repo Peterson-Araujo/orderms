@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: msorder
+
+  # Configuração com o MongoDB
+  mongodb:
+    host: localhost
+    port: 27017
+    username: admin
+    password: 123
+    authentication-database: admin
