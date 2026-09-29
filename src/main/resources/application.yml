@@ -4,8 +4,13 @@ spring:
 
   # Configuração com o MongoDB
   mongodb:
+    database: msorder
     host: localhost
     port: 27017
     username: admin
-    password: 123
+    password: "123"
     authentication-database: admin
+
+    data:
+      mongodb:
+        auto-index-creation: true
