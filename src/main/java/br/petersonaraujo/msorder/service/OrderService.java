@@ -6,18 +6,24 @@ import br.petersonaraujo.msorder.entity.OrderItem;
 import br.petersonaraujo.msorder.listener.dto.OrderCreatedEvent;
 import br.petersonaraujo.msorder.repository.OrderRepository;
 import lombok.AllArgsConstructor;
+import org.bson.Document;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 
 @Service
 @AllArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final MongoTemplate mongoTemplate;
 
     /**
      * Salva um {@link OrderCreatedEvent} na base de dados
@@ -42,6 +48,21 @@ public class OrderService {
         var orders = orderRepository.findAllByCustomerId(customerId, pageRequest);
 
         return orders.map(OrderResponse::fromResponse);
+    }
+
+    /**
+     * Realiza a busca calculada do total dos itens do customer
+     * @param customerId - ID do customer para busca
+     */
+    public BigDecimal findTotalOnOrdersByCustomerId(Long customerId) {
+        var aggregations = newAggregation(
+                match(Criteria.where("customerId").is(customerId)),
+                group().sum("total").as("total")
+        );
+
+        var response = mongoTemplate.aggregate(aggregations, "tb_orders", Document.class);
+
+        return new BigDecimal(response.getUniqueMappedResult().get("total").toString());
     }
 
     /**
