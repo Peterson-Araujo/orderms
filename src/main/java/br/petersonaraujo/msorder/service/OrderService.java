@@ -3,6 +3,7 @@ package br.petersonaraujo.msorder.service;
 import br.petersonaraujo.msorder.controller.dto.OrderResponse;
 import br.petersonaraujo.msorder.entity.OrderEntity;
 import br.petersonaraujo.msorder.entity.OrderItem;
+import br.petersonaraujo.msorder.exception.domain.EntidadeNaoEncontradaException;
 import br.petersonaraujo.msorder.listener.dto.OrderCreatedEvent;
 import br.petersonaraujo.msorder.repository.OrderRepository;
 import lombok.AllArgsConstructor;
@@ -60,9 +61,15 @@ public class OrderService {
                 group().sum("total").as("total")
         );
 
-        var response = mongoTemplate.aggregate(aggregations, "tb_orders", Document.class);
+        var result = mongoTemplate.aggregate(aggregations, "tb_orders", Document.class)
+                .getUniqueMappedResult();
 
-        return new BigDecimal(response.getUniqueMappedResult().get("total").toString());
+        if (result == null) {
+            throw new EntidadeNaoEncontradaException(
+                    "Nenhum pedido encontrado para o cliente " + customerId);
+        }
+
+        return new BigDecimal(result.get("total").toString());
     }
 
     /**
